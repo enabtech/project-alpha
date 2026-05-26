@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Project Alpha — Waste Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  /* ── Reset & Variables ─────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0c0f;
+    --surface:   #111418;
+    --border:    #1e2329;
+    --border2:   #2a3040;
+    --text:      #e8edf5;
+    --muted:     #5a6478;
+    --accent:    #00e5a0;
+    --accent2:   #0090ff;
+    --danger:    #ff4757;
+    --warn:      #ffb830;
+    --plastic:   #0096ff;
+    --metal:     #b4b8c4;
+    --paper:     #ffd740;
+    --organic:   #00c853;
+    --glass:     #b4d8ff;
+    --ewaste:    #ff40ff;
+    --textile:   #ff3d8a;
+    --shore:     #ff8c00;
+    --mono:      'Space Mono', monospace;
+    --sans:      'DM Sans', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow: hidden;
+  }
+
+  /* ── Layout ────────────────────────────────────────────── */
+  .shell {
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    grid-template-columns: 260px 1fr 280px;
+    height: 100vh;
+    gap: 0;
+  }
+
+  /* ── Topbar ────────────────────────────────────────────── */
+  .topbar {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 24px;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,229,160,.5); }
+    50%       { opacity: .7; box-shadow: 0 0 0 6px rgba(0,229,160,0); }
+  }
+
+  .topbar-sep { flex: 1; }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-family: var(--mono);
+    letter-spacing: .06em;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+  }
+
+  .status-pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background .3s;
+  }
+
+  .status-pill.live .dot { background: var(--accent); animation: pulse 1.5s infinite; }
+  .status-pill.live     { color: var(--accent); border-color: rgba(0,229,160,.3); }
+
+  /* ── Sidebar Left ──────────────────────────────────────── */
+  .sidebar-left {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 9px;
+    font-family: var(--mono);
+    letter-spacing: .18em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .stat-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .stat-card .val {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-card .lbl {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: var(--mono);
+    letter-spacing: .06em;
+  }
+
+  /* Controls */
+  .btn {
+    width: 100%;
+    padding: 11px;
+    border-radius: 8px;
+    border: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    cursor: pointer;
+    transition: all .2s;
+  }
+
+  .btn-start {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-start:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
+  .btn-stop {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+  .btn-stop:hover { background: rgba(255,71,87,.1); }
+
+  /* Legend */
+  .legend-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .legend-swatch {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── Main feed ─────────────────────────────────────────── */
+  .feed-area {
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #feed {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+  }
+
+  .feed-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    color: var(--muted);
+  }
+
+  .feed-placeholder svg { opacity: .25; }
+
+  .feed-placeholder p {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+  }
+
+  /* corner overlay */
+  .corner {
+    position: absolute;
+    width: 20px; height: 20px;
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0;
+    transition: opacity .4s;
+    pointer-events: none;
+  }
+  .corner.tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+  .corner.tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+  .corner.bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+  .corner.br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+  .feed-area.live .corner { opacity: 1; }
+
+  /* scanline effect */
+  .feed-area::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,.04) 2px,
+      rgba(0,0,0,.04) 4px
+    );
+    pointer-events: none;
+  }
+
+  /* ── Sidebar Right ─────────────────────────────────────── */
+  .sidebar-right {
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: hidden;
+  }
+
+  /* Detection log */
+  .log-area {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .log-area::-webkit-scrollbar { width: 4px; }
+  .log-area::-webkit-scrollbar-track { background: transparent; }
+  .log-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  .log-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideIn .2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .log-label { font-size: 11px; color: var(--text); font-family: var(--mono); }
+  .log-conf  { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+  /* Category bar chart */
+  .cat-bars { display: flex; flex-direction: column; gap: 8px; }
+
+  .cat-row { display: flex; flex-direction: column; gap: 4px; }
+
+  .cat-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+
+  .cat-bar-bg {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width .5s ease;
+    width: 0%;
+  }
+
+  /* Model info */
+  .model-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .model-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+    padding: 3px 0;
+  }
+
+  .model-row span:last-child { color: var(--text); }
+
+  .training-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    font-family: var(--mono);
+    letter-spacing: .1em;
+    background: rgba(255, 184, 48, .1);
+    color: var(--warn);
+    border: 1px solid rgba(255,184,48,.3);
+    border-radius: 20px;
+    padding: 3px 10px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .training-badge.active { display: inline-flex; }
+  .training-badge .spin {
+    width: 8px; height: 8px;
+    border: 1.5px solid var(--warn);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* scrollbar all */
+  .sidebar-left::-webkit-scrollbar { width: 4px; }
+  .sidebar-left::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-left::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── Topbar ─────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      PROJECT ALPHA
+    </div>
+    <span style="font-size:11px;color:var(--muted);font-family:var(--mono)">WASTE INTELLIGENCE SYSTEM</span>
+    <div class="topbar-sep"></div>
+    <div class="status-pill" id="statusPill">
+      <div class="dot"></div>
+      <span id="statusText">OFFLINE</span>
+    </div>
+  </header>
+
+  <!-- ── Left Sidebar ───────────────────────────────────── -->
+  <aside class="sidebar-left">
+
+    <div>
+      <div class="section-label">Live Stats</div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="val" id="statDetections">0</div>
+          <div class="lbl">DETECTED</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" id="statFps">0</div>
+          <div class="lbl">FPS</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" id="statSamples">0</div>
+          <div class="lbl">SAMPLES</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" id="statVersion">0</div>
+          <div class="lbl">MODEL V</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Camera</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-start" id="btnStart" onclick="startCamera()">▶ START</button>
+        <button class="btn btn-stop"  id="btnStop"  onclick="stopCamera()" style="display:none">■ STOP</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Legend</div>
+      <div class="legend-list">
+        <div class="legend-item"><div class="legend-swatch" style="background:#00e5a0"></div>PERSON</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--plastic)"></div>PLASTIC</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--glass)"></div>GLASS</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--metal)"></div>METAL</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--paper)"></div>PAPER</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--organic)"></div>ORGANIC</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--textile)"></div>TEXTILE</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--ewaste)"></div>E-WASTE</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:var(--shore)"></div>SHORE</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#9660c8"></div>APPLIANCE</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#966432"></div>BULKY</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#c8960a"></div>ANIMAL</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── Main Feed ──────────────────────────────────────── -->
+  <main class="feed-area" id="feedArea">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <div class="feed-placeholder" id="placeholder">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <rect x="8" y="14" width="48" height="36" rx="4" stroke="#5a6478" stroke-width="2"/>
+        <circle cx="32" cy="32" r="8" stroke="#5a6478" stroke-width="2"/>
+        <circle cx="32" cy="32" r="3" fill="#5a6478"/>
+        <rect x="26" y="8" width="12" height="6" rx="2" stroke="#5a6478" stroke-width="2"/>
+      </svg>
+      <p>CAMERA OFFLINE — PRESS START</p>
+    </div>
+
+    <img id="feed" src="" alt="Live Feed"/>
+  </main>
+
+  <!-- ── Right Sidebar ─────────────────────────────────── -->
+  <aside class="sidebar-right">
+
+    <div>
+      <div class="section-label">Model Info</div>
+      <div class="model-card">
+        <div class="model-row"><span>BASE</span><span>YOLOv8n</span></div>
+        <div class="model-row"><span>VERSION</span><span id="modelVer">v0</span></div>
+        <div class="model-row"><span>LAST RETRAIN</span><span id="lastRetrain">—</span></div>
+        <div class="model-row"><span>NEXT RETRAIN</span><span id="nextRetrain">—</span></div>
+        <div class="training-badge" id="trainingBadge">
+          <div class="spin"></div>
+          TRAINING IN PROGRESS
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Category Activity</div>
+      <div class="cat-bars" id="catBars">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div class="section-label">Detection Log</div>
+      <div class="log-area" id="logArea">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;padding-top:20px">
+          No detections yet
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+</div>
+
+<script>
+  // ── Category colours ──────────────────────────────────────
+  const CAT_COLORS = {
+    PERSON:    '#00e5a0',
+    PLASTIC:   '#0096ff',
+    GLASS:     '#b4d8ff',
+    METAL:     '#b4b8c4',
+    PAPER:     '#ffd740',
+    ORGANIC:   '#00c853',
+    TEXTILE:   '#ff3d8a',
+    'E-WASTE': '#ff40ff',
+    SHORE:     '#ff8c00',
+    APPLIANCE: '#9660c8',
+    BULKY:     '#966432',
+    ANIMAL:    '#c8960a',
+  };
+
+  let catCounts = {};
+
+  function getCat(label) {
+    const upper = label.toUpperCase();
+    for (const cat of Object.keys(CAT_COLORS)) {
+      if (upper.startsWith(cat)) return cat;
+    }
+    return 'OTHER';
+  }
+
+  function buildCatBars() {
+    const el = document.getElementById('catBars');
+    el.innerHTML = '';
+    const sorted = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]).slice(0, 8);
+    const max = sorted[0]?.[1] || 1;
+    for (const [cat, count] of sorted) {
+      const color = CAT_COLORS[cat] || '#5a6478';
+      const pct   = Math.round(count / max * 100);
+      el.innerHTML += `
+        <div class="cat-row">
+          <div class="cat-header">
+            <span style="color:${color}">${cat}</span>
+            <span>${count}</span>
+          </div>
+          <div class="cat-bar-bg">
+            <div class="cat-bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+        </div>`;
+    }
+  }
+
+  // ── Log ───────────────────────────────────────────────────
+  let lastLogLen = 0;
+
+  function updateLog(log) {
+    if (!log || log.length === lastLogLen) return;
+    lastLogLen = log.length;
+
+    const el = document.getElementById('logArea');
+    const newItems = log.slice(0, 20);
+
+    // Update category counts
+    for (const item of newItems) {
+      const cat = getCat(item.label);
+      catCounts[cat] = (catCounts[cat] || 0) + 1;
+    }
+    buildCatBars();
+
+    el.innerHTML = newItems.map(item => {
+      const cat   = getCat(item.label);
+      const color = CAT_COLORS[cat] || '#5a6478';
+      return `
+        <div class="log-item">
+          <span class="log-label" style="color:${color}">${item.label}</span>
+          <span class="log-conf">${(item.conf * 100).toFixed(0)}%</span>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Stats polling ─────────────────────────────────────────
+  async function pollStats() {
+    try {
+      const r = await fetch('/api/stats');
+      const d = await r.json();
+
+      document.getElementById('statDetections').textContent = d.detections ?? 0;
+      document.getElementById('statFps').textContent        = d.fps ?? 0;
+      document.getElementById('statSamples').textContent    = d.total_collected ?? 0;
+      document.getElementById('statVersion').textContent    = d.model_version ?? 0;
+      document.getElementById('modelVer').textContent       = `v${d.model_version ?? 0}`;
+      document.getElementById('lastRetrain').textContent    = d.last_retrain || '—';
+
+      // Training badge
+      const badge = document.getElementById('trainingBadge');
+      badge.classList.toggle('active', !!d.is_training);
+
+      updateLog(d.detection_log || []);
+    } catch(e) { /* server not up yet */ }
+  }
+
+  setInterval(pollStats, 800);
+  pollStats();
+
+  // ── Camera controls ───────────────────────────────────────
+  async function startCamera() {
+    const r = await fetch('/api/camera/start', {method:'POST'});
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('feed').src = '/video_feed';
+      document.getElementById('feed').style.display = 'block';
+      document.getElementById('placeholder').style.display = 'none';
+      document.getElementById('feedArea').classList.add('live');
+      document.getElementById('statusPill').classList.add('live');
+      document.getElementById('statusText').textContent = 'LIVE';
+      document.getElementById('btnStart').style.display = 'none';
+      document.getElementById('btnStop').style.display  = 'block';
+    } else {
+      alert('Camera error: ' + d.msg);
+    }
+  }
+
+  async function stopCamera() {
+    await fetch('/api/camera/stop', {method:'POST'});
+    document.getElementById('feed').src = '';
+    document.getElementById('feed').style.display  = 'none';
+    document.getElementById('placeholder').style.display = 'flex';
+    document.getElementById('feedArea').classList.remove('live');
+    document.getElementById('statusPill').classList.remove('live');
+    document.getElementById('statusText').textContent = 'OFFLINE';
+    document.getElementById('btnStart').style.display = 'block';
+    document.getElementById('btnStop').style.display  = 'none';
+  }
+</script>
+</body>
+</html>
